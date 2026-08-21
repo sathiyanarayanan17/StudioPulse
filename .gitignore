@@ -22,9 +22,11 @@ env/
 Thumbs.db
 
 # Distribution
-dist/
 build/
 *.egg-info/
+
+# Node modules (UI source has its own)
+node_modules/
 
 # Test
 .pytest_cache/
