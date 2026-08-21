@@ -4,11 +4,11 @@ This agent continuously watches Grafana for firing alerts
 and feeds them into the diagnosis pipeline.
 """
 
+from __future__ import annotations
+
 import asyncio
-from typing import Callable, Awaitable
-from src.grafana.client import GrafanaClient
+from typing import Callable, Awaitable, Any
 from src.grafana.alerts import AlertProcessor, ProcessedAlert
-from src.utils.config import load_config
 from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -23,18 +23,20 @@ class MonitorAgent:
 
     def __init__(
         self,
-        grafana_client: GrafanaClient,
+        grafana_client: Any,
         on_alert: Callable[[ProcessedAlert], Awaitable[None]],
+        polling_interval: int = 10,
     ):
         """Initialize the Monitor Agent.
 
         Args:
-            grafana_client: Grafana API client
+            grafana_client: Grafana API client (real or simulated)
             on_alert: Callback when a new alert is detected
+            polling_interval: Seconds between alert checks
         """
         self.alert_processor = AlertProcessor(grafana_client)
         self.on_alert = on_alert
-        self.config = load_config()
+        self.polling_interval = polling_interval
         self._running = False
         self._seen_alerts: set[str] = set()
 
@@ -42,8 +44,8 @@ class MonitorAgent:
         """Start the monitoring loop."""
         self._running = True
         logger.info(
-            "Monitor Agent started",
-            polling_interval=self.config.agent.polling_interval,
+            "👁️ Monitor Agent started",
+            polling_interval=self.polling_interval,
         )
 
         while self._running:
@@ -52,7 +54,7 @@ class MonitorAgent:
             except Exception as e:
                 logger.error("Error in monitoring loop", error=str(e))
 
-            await asyncio.sleep(self.config.agent.polling_interval)
+            await asyncio.sleep(self.polling_interval)
 
     async def stop(self):
         """Stop the monitoring loop."""
@@ -67,7 +69,7 @@ class MonitorAgent:
             if alert.alert_id not in self._seen_alerts:
                 self._seen_alerts.add(alert.alert_id)
                 logger.info(
-                    "New alert detected",
+                    "🚨 New alert detected",
                     alert_id=alert.alert_id,
                     title=alert.title,
                     severity=alert.severity.value,

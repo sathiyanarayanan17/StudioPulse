@@ -4,11 +4,10 @@ This agent takes diagnosis results and executes remediation actions
 to resolve pipeline incidents autonomously.
 """
 
+from __future__ import annotations
+
 import asyncio
 from typing import Any
-from src.cloud.vertex_ai import GeminiAgent
-from src.cloud.compute import ComputeOperations
-from src.grafana.client import GrafanaClient
 from src.grafana.dashboards import DashboardQuerier
 from src.utils.logger import setup_logger
 
@@ -36,9 +35,9 @@ class RemediateAgent:
 
     def __init__(
         self,
-        gemini_agent: GeminiAgent,
-        compute_ops: ComputeOperations,
-        grafana_client: GrafanaClient,
+        gemini_agent: Any,
+        compute_ops: Any,
+        grafana_client: Any,
         dashboard_querier: DashboardQuerier,
     ):
         self.gemini = gemini_agent
@@ -95,15 +94,14 @@ class RemediateAgent:
 
             if result.get("status") == "failed":
                 logger.warning(
-                    "Step failed, attempting rollback",
+                    "Step failed",
                     step=step.get("action"),
                 )
-                # Could implement rollback here
                 break
 
         # Step 3: Wait for stabilization
-        stabilization_time = 30  # seconds
-        logger.info("Waiting for stabilization", seconds=stabilization_time)
+        stabilization_time = 5  # seconds (shorter for demo)
+        logger.info("⏳ Waiting for stabilization...", seconds=stabilization_time)
         await asyncio.sleep(stabilization_time)
 
         # Step 4: Verify resolution
@@ -123,7 +121,7 @@ class RemediateAgent:
         # Step 5: Create incident annotation in Grafana
         resolved = verification.get("resolved", False)
         annotation_text = (
-            f"🤖 StudioPulse AI - Incident {'Resolved' if resolved else 'Requires Attention'}\n"
+            f"🤖 StudioPulse AI - Incident {'Resolved ✅' if resolved else 'Requires Attention ⚠️'}\n"
             f"Alert: {alert.title}\n"
             f"Root Cause: {diagnosis.get('diagnosis', {}).get('root_cause', 'Unknown')}\n"
             f"Actions Taken: {', '.join(s.get('action', '') for s in plan.get('steps', []))}\n"
@@ -135,8 +133,11 @@ class RemediateAgent:
             tags=["studiopulse", "auto-remediation", alert.category.value],
         )
 
+        status = "resolved" if resolved else "requires_attention"
+        logger.info(f"{'✅' if resolved else '⚠️'} Remediation {status}")
+
         return {
-            "status": "resolved" if resolved else "requires_attention",
+            "status": status,
             "alert_id": alert.alert_id,
             "plan": plan,
             "execution_results": execution_results,
@@ -145,18 +146,11 @@ class RemediateAgent:
         }
 
     async def _execute_step(self, step: dict[str, Any]) -> dict[str, Any]:
-        """Execute a single remediation step.
-
-        Args:
-            step: Step definition from the plan
-
-        Returns:
-            Execution result
-        """
+        """Execute a single remediation step."""
         action = step.get("action", "")
         params = step.get("parameters", {})
 
-        logger.info("Executing remediation step", action=action, params=params)
+        logger.info(f"⚡ Executing: {action}", params=params)
 
         try:
             if action == "scale_node_pool":
@@ -183,7 +177,7 @@ class RemediateAgent:
                     node_name=params.get("node_name", ""),
                 )
             elif action == "escalate_to_human":
-                logger.warning("Escalating to human operator", reason=params.get("reason"))
+                logger.warning("🚨 Escalating to human operator", reason=params.get("reason"))
                 return {"action": "escalate", "status": "escalated", "reason": params.get("reason")}
             else:
                 logger.warning("Unknown action", action=action)

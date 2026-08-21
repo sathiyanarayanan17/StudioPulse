@@ -8,6 +8,7 @@ Provides a web API for:
 """
 
 import asyncio
+import os
 from aiohttp import web
 from typing import Any
 from src.simulator import PipelineSimulator
@@ -36,16 +37,27 @@ class APIServer:
         self.app.router.add_get("/api/incidents", self._get_incidents)
         self.app.router.add_get("/api/status", self._get_status)
         self.app.router.add_post("/api/trigger", self._trigger_scenario)
-        self.app.router.add_static("/static", "src/dashboard/static", show_index=True)
 
     async def _index(self, request: web.Request) -> web.Response:
         """Serve the dashboard HTML."""
-        try:
-            with open("src/dashboard/index.html", "r") as f:
-                html = f.read()
-            return web.Response(text=html, content_type="text/html")
-        except FileNotFoundError:
-            return web.Response(text="Dashboard not found", status=404)
+        # Try multiple paths to find the dashboard
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "index.html"),
+            os.path.join(os.getcwd(), "src", "dashboard", "index.html"),
+            "src/dashboard/index.html",
+        ]
+        for path in possible_paths:
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    html = f.read()
+                return web.Response(text=html, content_type="text/html")
+            except FileNotFoundError:
+                continue
+
+        return web.Response(
+            text="<h1>StudioPulse AI</h1><p>Dashboard file not found. API is running at /api/health</p>",
+            content_type="text/html",
+        )
 
     async def _health(self, request: web.Request) -> web.Response:
         """Health check endpoint."""
@@ -53,6 +65,7 @@ class APIServer:
             "status": "healthy",
             "service": "studiopulse-ai",
             "version": "1.0.0",
+            "mode": "demo",
         })
 
     async def _get_metrics(self, request: web.Request) -> web.Response:
@@ -84,7 +97,11 @@ class APIServer:
 
     async def _trigger_scenario(self, request: web.Request) -> web.Response:
         """Trigger a failure scenario for demo."""
-        data = await request.json() if request.can_read_body else {}
+        try:
+            data = await request.json() if request.can_read_body else {}
+        except Exception:
+            data = {}
+
         scenario_name = data.get("scenario")
 
         alert = await self.simulator.trigger_scenario(scenario_name)

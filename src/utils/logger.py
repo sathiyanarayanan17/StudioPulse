@@ -1,12 +1,25 @@
 """StudioPulse AI - Structured Logging"""
 
+import os
+import sys
+import logging
 import structlog
-from src.utils.config import load_config
 
 
 def setup_logger(name: str) -> structlog.BoundLogger:
     """Set up structured logging for the application."""
-    config = load_config()
+    log_level = os.getenv("AGENT_LOG_LEVEL", "INFO")
+
+    # Map string level to int
+    level = getattr(logging, log_level.upper(), logging.INFO)
+
+    # Handle Windows console encoding issues with emojis
+    if sys.platform == "win32":
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, OSError):
+            pass
 
     structlog.configure(
         processors=[
@@ -17,12 +30,10 @@ def setup_logger(name: str) -> structlog.BoundLogger:
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.dev.ConsoleRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            structlog.get_level_from_name(config.agent.log_level)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(level),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True,
+        cache_logger_on_first_use=False,
     )
 
     return structlog.get_logger(name)

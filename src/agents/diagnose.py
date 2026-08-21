@@ -4,11 +4,11 @@ This agent takes alerts from the monitor, gathers correlated metrics,
 and uses Gemini to perform root cause analysis.
 """
 
+from __future__ import annotations
+
 from typing import Any
 from src.grafana.alerts import ProcessedAlert
 from src.grafana.dashboards import DashboardQuerier
-from src.cloud.vertex_ai import GeminiAgent
-from src.cloud.monitoring import CloudMonitoringClient
 from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -24,8 +24,8 @@ class DiagnoseAgent:
     def __init__(
         self,
         dashboard_querier: DashboardQuerier,
-        gemini_agent: GeminiAgent,
-        cloud_monitoring: CloudMonitoringClient,
+        gemini_agent: Any,
+        cloud_monitoring: Any,
     ):
         self.dashboard_querier = dashboard_querier
         self.gemini = gemini_agent

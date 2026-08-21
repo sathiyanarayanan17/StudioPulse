@@ -1,20 +1,13 @@
 """StudioPulse AI - Agent Orchestrator
 
 The orchestrator coordinates the Monitor, Diagnose, and Remediate agents
-into a cohesive autonomous pipeline.
+into a cohesive autonomous pipeline. This is the production orchestrator
+that uses real Google Cloud and Grafana credentials.
 """
 
-import asyncio
+from __future__ import annotations
+
 from typing import Any
-from src.agents.monitor import MonitorAgent
-from src.agents.diagnose import DiagnoseAgent
-from src.agents.remediate import RemediateAgent
-from src.grafana.alerts import ProcessedAlert
-from src.grafana.client import GrafanaClient
-from src.grafana.dashboards import DashboardQuerier
-from src.cloud.vertex_ai import GeminiAgent
-from src.cloud.compute import ComputeOperations
-from src.cloud.monitoring import CloudMonitoringClient
 from src.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -22,6 +15,8 @@ logger = setup_logger(__name__)
 
 class Orchestrator:
     """Main orchestrator that coordinates all agents in the StudioPulse pipeline.
+
+    This is the PRODUCTION orchestrator. For demo mode, see src/demo.py
 
     Flow:
     1. Monitor Agent detects a firing alert
@@ -31,6 +26,16 @@ class Orchestrator:
     """
 
     def __init__(self):
+        # Import production dependencies here (requires real credentials)
+        from src.grafana.client import GrafanaClient
+        from src.grafana.dashboards import DashboardQuerier
+        from src.cloud.vertex_ai import GeminiAgent
+        from src.cloud.compute import ComputeOperations
+        from src.cloud.monitoring import CloudMonitoringClient
+        from src.agents.monitor import MonitorAgent
+        from src.agents.diagnose import DiagnoseAgent
+        from src.agents.remediate import RemediateAgent
+
         # Initialize shared clients
         self.grafana_client = GrafanaClient()
         self.gemini_agent = GeminiAgent()
@@ -62,14 +67,8 @@ class Orchestrator:
     async def start(self):
         """Start the orchestrator and all agents."""
         logger.info("=" * 60)
-        logger.info("🎬 StudioPulse AI - Starting Autonomous Pipeline")
+        logger.info("🎬 StudioPulse AI - Starting Autonomous Pipeline (PRODUCTION)")
         logger.info("=" * 60)
-        logger.info(
-            "Agents initialized",
-            monitor="ready",
-            diagnose="ready",
-            remediate="ready",
-        )
 
         try:
             await self.monitor_agent.start()
@@ -86,14 +85,8 @@ class Orchestrator:
         await self.grafana_client.close()
         logger.info("Shutdown complete")
 
-    async def _handle_alert(self, alert: ProcessedAlert):
-        """Handle a new alert detected by the Monitor Agent.
-
-        This is the main pipeline: detect → diagnose → remediate.
-
-        Args:
-            alert: The detected alert
-        """
+    async def _handle_alert(self, alert):
+        """Handle a new alert detected by the Monitor Agent."""
         logger.info(
             "🚨 Pipeline triggered",
             alert_id=alert.alert_id,
@@ -101,7 +94,6 @@ class Orchestrator:
             severity=alert.severity.value,
         )
 
-        # Track as active incident
         self._active_incidents[alert.alert_id] = {
             "alert": alert,
             "status": "diagnosing",
@@ -112,18 +104,12 @@ class Orchestrator:
             logger.info("📋 Phase 1: Diagnosing...")
             diagnosis_result = await self.diagnose_agent.diagnose(alert)
 
-            self._active_incidents[alert.alert_id]["status"] = "remediating"
-            self._active_incidents[alert.alert_id]["diagnosis"] = diagnosis_result
-
             # Phase 2: Remediate
             logger.info("🔧 Phase 2: Remediating...")
             remediation_result = await self.remediate_agent.remediate(diagnosis_result)
 
             # Phase 3: Record outcome
             self._active_incidents[alert.alert_id]["status"] = remediation_result["status"]
-            self._active_incidents[alert.alert_id]["result"] = remediation_result
-
-            # Move to history
             self._incident_history.append(self._active_incidents.pop(alert.alert_id))
 
             status_emoji = "✅" if remediation_result["status"] == "resolved" else "⚠️"
@@ -131,17 +117,11 @@ class Orchestrator:
                 f"{status_emoji} Pipeline complete",
                 alert_id=alert.alert_id,
                 status=remediation_result["status"],
-                verification=remediation_result.get("verification", {}).get("summary"),
             )
 
         except Exception as e:
-            logger.error(
-                "Pipeline failed",
-                alert_id=alert.alert_id,
-                error=str(e),
-            )
+            logger.error("Pipeline failed", alert_id=alert.alert_id, error=str(e))
             self._active_incidents[alert.alert_id]["status"] = "error"
-            self._active_incidents[alert.alert_id]["error"] = str(e)
 
     def get_status(self) -> dict[str, Any]:
         """Get current orchestrator status."""
@@ -152,5 +132,4 @@ class Orchestrator:
                 if i.get("status") == "resolved"
             ]),
             "total_incidents": len(self._incident_history),
-            "incidents": self._active_incidents,
         }
