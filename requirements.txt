@@ -22,3 +22,4 @@ tenacity==8.4.1
 # Testing
 pytest==8.2.2
 pytest-asyncio==0.23.7
+pytest-aiohttp==1.1.1

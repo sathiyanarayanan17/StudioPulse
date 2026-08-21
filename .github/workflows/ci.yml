@@ -1,0 +1,59 @@
+name: StudioPulse AI CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 pyflakes
+
+      - name: Syntax check (pyflakes)
+        run: |
+          python -m pyflakes src/ tests/
+
+      - name: Lint with flake8
+        run: |
+          # Stop on syntax errors or undefined names
+          flake8 src/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warn on complexity and style (non-blocking)
+          flake8 src/ tests/ --count --exit-zero --max-complexity=15 --max-line-length=120 --statistics
+
+      - name: Run tests with pytest
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+      - name: Verify module imports
+        run: |
+          python -c "from src.simulator import PipelineSimulator; print('✅ Simulator OK')"
+          python -c "from src.notifications import WebhookNotifier; print('✅ Notifications OK')"
+          python -c "from src.storage import IncidentStore; print('✅ Storage OK')"
+          python -c "from src.utils.cost_tracker import CostTracker; print('✅ CostTracker OK')"

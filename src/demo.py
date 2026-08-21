@@ -12,7 +12,7 @@ Run with: python -m src.demo
 import asyncio
 import sys
 import time
-from src.simulator import PipelineSimulator
+from src.simulator import PipelineSimulator, PipelineState
 from src.simulator.grafana_sim import SimulatedGrafanaClient
 from src.simulator.compute_sim import SimulatedComputeOperations
 from src.agents.monitor import MonitorAgent
@@ -411,8 +411,162 @@ async def run_demo():
         await api_runner.cleanup()
 
 
-if __name__ == "__main__":
+class AutoDemoRunner:
+    """Automatically triggers random scenarios at configurable intervals for demo recording.
+
+    Perfect for recording demo videos where incidents should appear
+    naturally without manual API calls. Triggers a random scenario
+    every 30-45 seconds (configurable).
+    """
+
+    def __init__(
+        self,
+        simulator: PipelineSimulator,
+        min_interval: float = 30.0,
+        max_interval: float = 45.0,
+        max_scenarios: int = 0,
+    ):
+        """Initialize the auto-demo runner.
+
+        Args:
+            simulator: The pipeline simulator to trigger scenarios on
+            min_interval: Minimum seconds between triggers
+            max_interval: Maximum seconds between triggers
+            max_scenarios: Maximum number of scenarios to trigger (0 = unlimited)
+        """
+        self.simulator = simulator
+        self.min_interval = min_interval
+        self.max_interval = max_interval
+        self.max_scenarios = max_scenarios
+        self._running = False
+        self._trigger_count = 0
+        self._available_scenarios = [s["name"] for s in PipelineSimulator.SCENARIOS]
+
+    @property
+    def trigger_count(self) -> int:
+        """Number of scenarios triggered so far."""
+        return self._trigger_count
+
+    async def start(self):
+        """Start the auto-demo loop.
+
+        Triggers random scenarios at random intervals between
+        min_interval and max_interval seconds.
+        """
+        import random
+
+        self._running = True
+        logger.info(
+            "🎥 Auto-Demo Runner started",
+            min_interval=self.min_interval,
+            max_interval=self.max_interval,
+            max_scenarios=self.max_scenarios or "unlimited",
+        )
+
+        # Initial delay to let the system stabilize
+        await asyncio.sleep(10)
+
+        while self._running:
+            if self.max_scenarios > 0 and self._trigger_count >= self.max_scenarios:
+                logger.info(
+                    "🎥 Auto-Demo Runner completed all scenarios",
+                    total_triggered=self._trigger_count,
+                )
+                break
+
+            # Wait for the pipeline to be healthy before triggering next scenario
+            if self.simulator.metrics.pipeline_state != PipelineState.HEALTHY:
+                await asyncio.sleep(5)
+                continue
+
+            # Random interval between triggers
+            interval = random.uniform(self.min_interval, self.max_interval)
+            logger.info(
+                f"🎥 Next scenario in {interval:.0f} seconds...",
+                trigger_count=self._trigger_count,
+            )
+            await asyncio.sleep(interval)
+
+            if not self._running:
+                break
+
+            # Pick a random scenario
+            scenario_name = random.choice(self._available_scenarios)
+            logger.info(
+                "🎥 Auto-triggering scenario",
+                scenario=scenario_name,
+                trigger_number=self._trigger_count + 1,
+            )
+
+            await self.simulator.trigger_scenario(scenario_name)
+            self._trigger_count += 1
+
+    async def stop(self):
+        """Stop the auto-demo runner."""
+        self._running = False
+        logger.info(
+            "🎥 Auto-Demo Runner stopped",
+            total_triggered=self._trigger_count,
+        )
+
+
+async def run_auto_demo():
+    """Run the complete demo system with auto-triggering scenarios.
+
+    This is ideal for recording demo videos - scenarios trigger
+    automatically every 30-45 seconds without manual intervention.
+    """
+    print_demo_banner()
+    print("  🎥 AUTO-DEMO MODE: Scenarios will trigger automatically!\n")
+
+    # Initialize simulator
+    simulator = PipelineSimulator()
+
+    # Initialize demo orchestrator
+    orchestrator = DemoOrchestrator(simulator)
+
+    # Initialize API server
+    api_server = APIServer(simulator=simulator, orchestrator=orchestrator)
+    orchestrator.api_server = api_server
+
+    # Initialize auto-demo runner
+    auto_runner = AutoDemoRunner(
+        simulator=simulator,
+        min_interval=30.0,
+        max_interval=45.0,
+    )
+
+    # Start API server
+    logger.info("Starting all components (auto-demo mode)...")
+    api_runner = await api_server.start(host="0.0.0.0", port=8080)
+
+    print("\n  🌐 Dashboard ready at: http://localhost:8080")
+    print("  📡 API ready at: http://localhost:8080/api/health")
+    print("  🎥 Auto-triggering every 30-45 seconds")
+    print("\n  Press Ctrl+C to stop\n")
+
+    # Run all components concurrently
     try:
-        asyncio.run(run_demo())
+        await asyncio.gather(
+            simulator.start(),
+            orchestrator.start(),
+            auto_runner.start(),
+        )
+    except asyncio.CancelledError:
+        pass
+    finally:
+        await auto_runner.stop()
+        await orchestrator.stop()
+        await api_runner.cleanup()
+
+
+if __name__ == "__main__":
+    # Check for --auto flag
+    auto_mode = "--auto" in sys.argv
+    try:
+        if auto_mode:
+            asyncio.run(run_auto_demo())
+        else:
+            asyncio.run(run_demo())
     except KeyboardInterrupt:
         print("\n\n  🎬 Demo ended. That's a wrap!\n")

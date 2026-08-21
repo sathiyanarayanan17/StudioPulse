@@ -1,8 +1,7 @@
 """Tests for the Monitor Agent."""
 
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from src.agents.monitor import MonitorAgent
 from src.grafana.alerts import ProcessedAlert, AlertSeverity, AlertCategory
 
@@ -21,14 +20,11 @@ def mock_callback():
 
 @pytest.fixture
 def monitor_agent(mock_grafana_client, mock_callback):
-    with patch("src.agents.monitor.load_config") as mock_config:
-        mock_config.return_value = MagicMock(
-            agent=MagicMock(polling_interval=1)
-        )
-        agent = MonitorAgent(
-            grafana_client=mock_grafana_client,
-            on_alert=mock_callback,
-        )
+    agent = MonitorAgent(
+        grafana_client=mock_grafana_client,
+        on_alert=mock_callback,
+        polling_interval=1,
+    )
     return agent
 
 
