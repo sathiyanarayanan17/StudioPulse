@@ -1,0 +1,60 @@
+# StudioPulse AI - Agent Configuration
+# Defines the multi-agent pipeline for media rendering self-healing
+
+agents:
+  monitor:
+    name: "Monitor Agent"
+    description: "Watches Grafana for firing alerts and anomalies"
+    polling_interval: 30  # seconds
+    alert_filters:
+      - severity: critical
+        auto_process: true
+      - severity: warning
+        auto_process: true
+      - severity: info
+        auto_process: false
+
+  diagnose:
+    name: "Diagnose Agent"
+    description: "Correlates metrics and performs root cause analysis using Gemini"
+    max_correlation_window: "15m"
+    confidence_threshold: 0.7  # Minimum confidence to proceed with remediation
+    escalate_below_threshold: true
+
+  remediate:
+    name: "Remediate Agent"
+    description: "Plans and executes remediation actions"
+    max_actions_per_incident: 3
+    require_verification: true
+    stabilization_wait: 30  # seconds after action before verification
+    allowed_actions:
+      - scale_node_pool
+      - restart_workload
+      - resize_disk
+      - drain_and_replace_node
+      - reprioritize_queue
+      - clear_cache
+    blocked_actions:
+      - delete_cluster
+      - terminate_all_instances
+
+# Rendering pipeline configuration
+pipeline:
+  cluster_name: "render-cluster"
+  namespace: "render"
+  gpu_node_pool: "gpu-pool"
+  default_gpu_nodes: 3
+  max_gpu_nodes: 10
+  render_queue: "render-jobs"
+  critical_deployments:
+    - "render-worker"
+    - "frame-assembler"
+    - "encode-service"
+
+# Incident management
+incidents:
+  auto_resolve_timeout: 300  # seconds
+  max_retries: 3
+  notification_webhook: ""  # Optional Slack/Teams webhook
+  create_grafana_annotations: true
+  log_to_cloud_monitoring: true

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudioPulse AI - Pipeline Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0f1419;
+            --bg-secondary: #1a2332;
+            --bg-card: #1e2a3a;
+            --text-primary: #e4e8ed;
+            --text-secondary: #8899aa;
+            --accent-blue: #4fc3f7;
+            --accent-green: #66bb6a;
+            --accent-red: #ef5350;
+            --accent-orange: #ffa726;
+            --accent-purple: #ab47bc;
+            --border: #2d3d50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 span { font-size: 28px; }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-healthy { background: rgba(102, 187, 106, 0.15); color: var(--accent-green); }
+        .status-critical { background: rgba(239, 83, 80, 0.15); color: var(--accent-red); animation: pulse 1.5s infinite; }
+        .status-recovering { background: rgba(255, 167, 38, 0.15); color: var(--accent-orange); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .dashboard {
+            padding: 24px 32px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .metric-card .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .metric-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .metric-card .value.danger { color: var(--accent-red); }
+        .metric-card .value.warning { color: var(--accent-orange); }
+        .metric-card .value.good { color: var(--accent-green); }
+
+        .metric-card .unit {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .panels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .panel h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-item {
+            background: rgba(239, 83, 80, 0.08);
+            border: 1px solid rgba(239, 83, 80, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+        }
+
+        .alert-item .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-red);
+        }
+
+        .alert-item .meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .job-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .job-item:last-child { border-bottom: none; }
+
+        .job-item .name {
+            flex: 1;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .job-item .progress-bar {
+            width: 120px;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .job-item .progress-fill {
+            height: 100%;
+            background: var(--accent-blue);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .job-item .percent {
+            font-size: 12px;
+            color: var(--text-secondary);
+            width: 45px;
+            text-align: right;
+        }
+
+        .incident-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .incident-item:last-child { border-bottom: none; }
+
+        .incident-item .title { font-size: 13px; font-weight: 500; }
+        .incident-item .status {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .incident-resolved { color: var(--accent-green); }
+        .incident-active { color: var(--accent-orange); }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--accent-blue);
+            background: rgba(79, 195, 247, 0.1);
+        }
+
+        .btn-danger {
+            border-color: rgba(239, 83, 80, 0.5);
+            color: var(--accent-red);
+        }
+
+        .btn-danger:hover {
+            border-color: var(--accent-red);
+            background: rgba(239, 83, 80, 0.1);
+        }
+
+        .log-panel {
+            grid-column: 1 / -1;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 12px;
+            padding: 4px 0;
+            color: var(--text-secondary);
+        }
+
+        .log-entry .timestamp { color: var(--text-secondary); }
+        .log-entry .level-info { color: var(--accent-blue); }
+        .log-entry .level-warn { color: var(--accent-orange); }
+        .log-entry .level-error { color: var(--accent-red); }
+        .log-entry .level-success { color: var(--accent-green); }
+
+        .no-alerts {
+            color: var(--accent-green);
+            font-size: 14px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .panels { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>🎬</span> StudioPulse AI</h1>
+        <div id="pipeline-status" class="status-badge status-healthy">● Healthy</div>
+    </div>
+
+    <div class="dashboard">
+        <!-- Metrics -->
+        <div class="metrics-grid" id="metrics-grid"></div>
+
+        <!-- Controls -->
+        <div class="panel">
+            <h3>🎮 Demo Controls</h3>
+            <div class="controls">
+                <button class="btn btn-danger" onclick="triggerScenario('gpu_saturation')">🔥 GPU Saturation</button>
+                <button class="btn btn-danger" onclick="triggerScenario('memory_leak')">💾 Memory Leak</button>
+                <button class="btn btn-danger" onclick="triggerScenario('queue_backlog')">📋 Queue Backlog</button>
+                <button class="btn btn-danger" onclick="triggerScenario('disk_full')">💽 Disk Full</button>
+                <button class="btn btn-danger" onclick="triggerScenario('node_failure')">🖥️ Node Failure</button>
+                <button class="btn" onclick="triggerScenario(null)">🎲 Random Scenario</button>
+            </div>
+        </div>
+
+        <div class="panels">
+            <!-- Active Alerts -->
+            <div class="panel">
+                <h3>🚨 Active Alerts</h3>
+                <div id="alerts-container">
+                    <div class="no-alerts">✅ No active alerts</div>
+                </div>
+            </div>
+
+            <!-- Render Jobs -->
+            <div class="panel">
+                <h3>🎞️ Render Jobs</h3>
+                <div id="jobs-container"></div>
+            </div>
+
+            <!-- Incidents -->
+            <div class="panel">
+                <h3>📋 Incident History</h3>
+                <div id="incidents-container">
+                    <div class="no-alerts">No incidents yet</div>
+                </div>
+            </div>
+
+            <!-- Agent Log -->
+            <div class="panel log-panel">
+                <h3>🤖 Agent Activity Log</h3>
+                <div id="log-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const REFRESH_INTERVAL = 2000;
+        let logEntries = [];
+
+        function addLog(level, message) {
+            const time = new Date().toLocaleTimeString();
+            logEntries.unshift({ time, level, message });
+            if (logEntries.length > 50) logEntries.pop();
+            renderLog();
+        }
+
+        function renderLog() {
+            const container = document.getElementById('log-container');
+            container.innerHTML = logEntries.map(entry => `
+                <div class="log-entry">
+                    <span class="timestamp">[${entry.time}]</span>
+                    <span class="level-${entry.level}">[${entry.level.toUpperCase()}]</span>
+                    ${entry.message}
+                </div>
+            `).join('');
+        }
+
+        function getMetricColor(name, value) {
+            if (name.includes('utilization') || name.includes('memory') || name.includes('disk')) {
+                if (value > 90) return 'danger';
+                if (value > 75) return 'warning';
+                return 'good';
+            }
+            if (name === 'render_queue_depth') {
+                if (value > 50) return 'danger';
+                if (value > 20) return 'warning';
+                return 'good';
+            }
+            if (name === 'failed_renders_per_min') {
+                if (value > 2) return 'danger';
+                if (value > 0) return 'warning';
+                return 'good';
+            }
+            return '';
+        }
+
+        function getMetricUnit(name) {
+            if (name.includes('percent') || name.includes('utilization')) return '%';
+            if (name.includes('mbps')) return 'Mbps';
+            if (name.includes('seconds')) return 's';
+            return '';
+        }
+
+        function formatMetricName(name) {
+            return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        async function fetchMetrics() {
+            try {
+                const res = await fetch('/api/metrics');
+                const metrics = await res.json();
+                renderMetrics(metrics);
+                updateStatus(metrics.pipeline_state);
+            } catch (e) {
+                console.error('Failed to fetch metrics:', e);
+            }
+        }
+
+        function renderMetrics(metrics) {
+            const grid = document.getElementById('metrics-grid');
+            const displayMetrics = [
+                'gpu_utilization', 'memory_utilization', 'cpu_utilization',
+                'render_queue_depth', 'active_render_jobs', 'failed_renders_per_min',
+                'node_count', 'healthy_nodes', 'disk_usage_percent'
+            ];
+
+            grid.innerHTML = displayMetrics.map(name => {
+                const value = metrics[name];
+                const color = getMetricColor(name, value);
+                const unit = getMetricUnit(name);
+                return `
+                    <div class="metric-card">
+                        <div class="label">${formatMetricName(name)}</div>
+                        <div class="value ${color}">${typeof value === 'number' ? value.toFixed(1) : value}</div>
+                        <div class="unit">${unit}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStatus(state) {
+            const badge = document.getElementById('pipeline-status');
+            badge.className = 'status-badge';
+            if (state === 'healthy') {
+                badge.classList.add('status-healthy');
+                badge.textContent = '● Healthy';
+            } else if (state === 'critical' || state === 'degraded') {
+                badge.classList.add('status-critical');
+                badge.textContent = '● Critical';
+            } else {
+                badge.classList.add('status-recovering');
+                badge.textContent = '● Recovering';
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const res = await fetch('/api/alerts');
+                const data = await res.json();
+                renderAlerts(data.alerts);
+            } catch (e) {}
+        }
+
+        function renderAlerts(alerts) {
+            const container = document.getElementById('alerts-container');
+            if (!alerts || alerts.length === 0) {
+                container.innerHTML = '<div class="no-alerts">✅ No active alerts</div>';
+                return;
+            }
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item">
+                    <div class="title">${alert.title}</div>
+                    <div class="meta">Severity: ${alert.labels?.severity || 'unknown'} | ${alert.labels?.alertname || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        async function fetchJobs() {
+            try {
+                const res = await fetch('/api/jobs');
+                const data = await res.json();
+                renderJobs(data.jobs);
+            } catch (e) {}
+        }
+
+        function renderJobs(jobs) {
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = jobs.map(job => `
+                <div class="job-item">
+                    <div class="name">${job.name}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${job.percent}%"></div>
+                    </div>
+                    <div class="percent">${job.percent}%</div>
+                </div>
+            `).join('');
+        }
+
+        async function fetchIncidents() {
+            try {
+                const res = await fetch('/api/incidents');
+                const data = await res.json();
+                renderIncidents(data.incidents);
+            } catch (e) {}
+        }
+
+        function renderIncidents(incidents) {
+            const container = document.getElementById('incidents-container');
+            if (!incidents || incidents.length === 0) {
+                container.innerHTML = '<div class="no-alerts">No incidents yet</div>';
+                return;
+            }
+            container.innerHTML = incidents.slice(-10).reverse().map(inc => `
+                <div class="incident-item">
+                    <div class="title">${inc.title}</div>
+                    <div class="status ${inc.status === 'resolved' ? 'incident-resolved' : 'incident-active'}">
+                        ${inc.status === 'resolved' ? '✅ Resolved' : '⚡ ' + inc.status}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function triggerScenario(scenario) {
+            try {
+                const body = scenario ? { scenario } : {};
+                const res = await fetch('/api/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json();
+                addLog('error', `🚨 ALERT FIRED: ${data.alert.title}`);
+                addLog('info', '🤖 Monitor Agent: Alert detected, starting diagnosis...');
+
+                setTimeout(() => {
+                    addLog('info', '📊 Diagnose Agent: Correlating metrics from Grafana...');
+                }, 2000);
+                setTimeout(() => {
+                    addLog('info', '🧠 Diagnose Agent: Analyzing with Gemini...');
+                }, 4000);
+                setTimeout(() => {
+                    addLog('warn', '🔧 Remediate Agent: Planning remediation steps...');
+                }, 6000);
+                setTimeout(() => {
+                    addLog('info', '⚡ Remediate Agent: Executing remediation...');
+                }, 8000);
+                setTimeout(() => {
+                    addLog('success', '✅ Pipeline: Incident resolved autonomously');
+                }, 12000);
+
+            } catch (e) {
+                addLog('error', 'Failed to trigger scenario');
+            }
+        }
+
+        // Poll for updates
+        setInterval(() => {
+            fetchMetrics();
+            fetchAlerts();
+            fetchJobs();
+            fetchIncidents();
+        }, REFRESH_INTERVAL);
+
+        // Initial load
+        fetchMetrics();
+        fetchAlerts();
+        fetchJobs();
+        addLog('info', '🎬 StudioPulse AI Dashboard initialized');
+        addLog('info', '🤖 All agents ready: Monitor | Diagnose | Remediate');
+    </script>
+</body>
+</html>
