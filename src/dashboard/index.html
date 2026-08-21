@@ -3,33 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudioPulse AI - Pipeline Dashboard</title>
+    <title>StudioPulse AI - Autonomous Pipeline Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0f1419;
-            --bg-secondary: #1a2332;
-            --bg-card: #1e2a3a;
-            --text-primary: #e4e8ed;
-            --text-secondary: #8899aa;
-            --accent-blue: #4fc3f7;
-            --accent-green: #66bb6a;
-            --accent-red: #ef5350;
-            --accent-orange: #ffa726;
-            --accent-purple: #ab47bc;
-            --border: #2d3d50;
+            --bg-dark: #0a0e1a;
+            --bg-card: #111827;
+            --bg-card-hover: #1a2332;
+            --bg-elevated: #1f2937;
+            --border: rgba(99, 102, 241, 0.15);
+            --border-glow: rgba(99, 102, 241, 0.4);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-indigo: #818cf8;
+            --accent-blue: #60a5fa;
+            --accent-cyan: #22d3ee;
+            --accent-green: #34d399;
+            --accent-emerald: #10b981;
+            --accent-yellow: #fbbf24;
+            --accent-orange: #fb923c;
+            --accent-red: #f87171;
+            --accent-pink: #f472b6;
+            --accent-purple: #a78bfa;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            --gradient-cyber: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
+            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', -apple-system, sans-serif;
-            background: var(--bg-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
             color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
         .header {
-            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             padding: 16px 32px;
             display: flex;
@@ -37,77 +72,190 @@
             justify-content: space-between;
         }
 
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
+        .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
-        .header h1 span { font-size: 28px; }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
 
-        .status-badge {
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo .subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
         }
 
-        .status-healthy { background: rgba(102, 187, 106, 0.15); color: var(--accent-green); }
-        .status-critical { background: rgba(239, 83, 80, 0.15); color: var(--accent-red); animation: pulse 1.5s infinite; }
-        .status-recovering { background: rgba(255, 167, 38, 0.15); color: var(--accent-orange); }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+        .status-pill .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
         }
 
-        .dashboard {
+        .status-healthy {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-emerald);
+        }
+        .status-healthy .dot { background: var(--accent-emerald); box-shadow: 0 0 10px var(--accent-emerald); }
+
+        .status-critical {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: var(--accent-red);
+            animation: border-pulse 1.5s infinite;
+        }
+        .status-critical .dot { background: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+
+        .status-recovering {
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: var(--accent-yellow);
+        }
+        .status-recovering .dot { background: var(--accent-yellow); box-shadow: 0 0 10px var(--accent-yellow); }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        @keyframes border-pulse {
+            0%, 100% { border-color: rgba(248, 113, 113, 0.3); }
+            50% { border-color: rgba(248, 113, 113, 0.7); }
+        }
+
+        .live-badge {
+            background: var(--gradient-danger);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: pulse-dot 2s infinite;
+        }
+
+        /* Main Content */
+        .main {
+            position: relative;
+            z-index: 1;
             padding: 24px 32px;
-            display: grid;
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
-        .metrics-grid {
+        /* Metrics Grid */
+        .metrics-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
         }
 
         .metric-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .metric-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .metric-card:hover::before { opacity: 1; }
+
+        .metric-card .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
         }
 
         .metric-card .label {
-            font-size: 12px;
-            color: var(--text-secondary);
+            font-size: 11px;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-weight: 600;
             margin-bottom: 8px;
         }
 
         .metric-card .value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--accent-blue);
+            font-size: 28px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -1px;
         }
-
-        .metric-card .value.danger { color: var(--accent-red); }
-        .metric-card .value.warning { color: var(--accent-orange); }
-        .metric-card .value.good { color: var(--accent-green); }
 
         .metric-card .unit {
-            font-size: 14px;
-            color: var(--text-secondary);
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
-        .panels {
+        .value-good { color: var(--accent-green); }
+        .value-warning { color: var(--accent-yellow); }
+        .value-danger { color: var(--accent-red); }
+        .value-neutral { color: var(--accent-blue); }
+
+        /* Panels Layout */
+        .panels-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
@@ -116,219 +264,574 @@
         .panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s;
         }
 
-        .panel h3 {
-            font-size: 14px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 16px;
+        .panel:hover {
+            border-color: var(--border-glow);
+        }
+
+        .panel-header {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            margin-bottom: 18px;
         }
 
-        .alert-item {
-            background: rgba(239, 83, 80, 0.08);
-            border: 1px solid rgba(239, 83, 80, 0.3);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-        }
-
-        .alert-item .title {
-            font-size: 14px;
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
             font-weight: 600;
-            color: var(--accent-red);
-        }
-
-        .alert-item .meta {
-            font-size: 12px;
             color: var(--text-secondary);
-            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
         }
 
-        .job-item {
+        .panel-title .icon {
+            font-size: 18px;
+        }
+
+        .panel-badge {
+            background: var(--bg-elevated);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Scenario Buttons */
+        .scenarios-panel {
+            grid-column: 1 / -1;
+        }
+
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .scenario-btn {
+            position: relative;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .scenario-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-danger);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .scenario-btn:hover::before { opacity: 0.1; }
+
+        .scenario-btn:hover {
+            border-color: var(--accent-red);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(248, 113, 113, 0.15);
+        }
+
+        .scenario-btn:active {
+            transform: translateY(0);
+        }
+
+        .scenario-btn .emoji {
+            font-size: 22px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .scenario-btn .text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .scenario-btn .text .name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .scenario-btn .text .desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .scenario-random {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .scenario-random:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
+        }
+        .scenario-random::before { background: var(--gradient-cyber); }
+
+        /* Alerts */
+        .alert-item {
+            background: rgba(248, 113, 113, 0.05);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert-item:hover {
+            background: rgba(248, 113, 113, 0.08);
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        .alert-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-red);
+            margin-bottom: 4px;
+        }
+
+        .alert-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+
+        .alert-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Jobs */
+        .job-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.08);
         }
 
         .job-item:last-child { border-bottom: none; }
 
-        .job-item .name {
-            flex: 1;
-            font-size: 13px;
-            font-family: monospace;
+        .job-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
         }
 
-        .job-item .progress-bar {
-            width: 120px;
-            height: 6px;
-            background: var(--bg-primary);
-            border-radius: 3px;
+        .job-info { flex: 1; }
+
+        .job-name {
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .job-resolution {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .job-progress {
+            width: 100px;
+            height: 4px;
+            background: var(--bg-dark);
+            border-radius: 2px;
             overflow: hidden;
         }
 
-        .job-item .progress-fill {
+        .job-progress-fill {
             height: 100%;
-            background: var(--accent-blue);
-            border-radius: 3px;
-            transition: width 0.5s ease;
+            border-radius: 2px;
+            background: var(--gradient-cyber);
+            transition: width 1s ease;
         }
 
-        .job-item .percent {
-            font-size: 12px;
+        .job-percent {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
             color: var(--text-secondary);
-            width: 45px;
+            width: 40px;
             text-align: right;
         }
 
+        /* Incidents */
         .incident-item {
             padding: 12px 0;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.08);
+            animation: slideIn 0.3s ease-out;
         }
 
         .incident-item:last-child { border-bottom: none; }
 
-        .incident-item .title { font-size: 13px; font-weight: 500; }
-        .incident-item .status {
+        .incident-title {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .incident-status {
             font-size: 11px;
-            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .incident-resolved { color: var(--accent-green); }
-        .incident-active { color: var(--accent-orange); }
+        .incident-active { color: var(--accent-yellow); }
+        .incident-triggered { color: var(--accent-orange); }
 
-        .controls {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            border-color: var(--accent-blue);
-            background: rgba(79, 195, 247, 0.1);
-        }
-
-        .btn-danger {
-            border-color: rgba(239, 83, 80, 0.5);
-            color: var(--accent-red);
-        }
-
-        .btn-danger:hover {
-            border-color: var(--accent-red);
-            background: rgba(239, 83, 80, 0.1);
-        }
-
+        /* Agent Log */
         .log-panel {
             grid-column: 1 / -1;
-            max-height: 300px;
-            overflow-y: auto;
         }
+
+        .log-container {
+            max-height: 280px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
         .log-entry {
-            font-family: 'Cascadia Code', 'Fira Code', monospace;
-            font-size: 12px;
-            padding: 4px 0;
-            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: slideIn 0.2s ease-out;
+            transition: background 0.2s;
         }
 
-        .log-entry .timestamp { color: var(--text-secondary); }
-        .log-entry .level-info { color: var(--accent-blue); }
-        .log-entry .level-warn { color: var(--accent-orange); }
-        .log-entry .level-error { color: var(--accent-red); }
-        .log-entry .level-success { color: var(--accent-green); }
+        .log-entry:hover {
+            background: var(--bg-elevated);
+        }
 
-        .no-alerts {
-            color: var(--accent-green);
-            font-size: 14px;
-            padding: 20px;
+        .log-time {
+            color: var(--text-muted);
+            white-space: nowrap;
+            min-width: 70px;
+        }
+
+        .log-level {
+            font-weight: 600;
+            min-width: 50px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 10px;
             text-align: center;
         }
 
-        @media (max-width: 768px) {
-            .panels { grid-template-columns: 1fr; }
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+        .log-level-info { background: rgba(96, 165, 250, 0.15); color: var(--accent-blue); }
+        .log-level-warn { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+        .log-level-error { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
+        .log-level-success { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); }
+
+        .log-message { color: var(--text-secondary); word-break: break-word; }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .empty-state .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Pipeline Status Bar */
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            transition: all 0.5s;
+        }
+
+        .pipeline-step.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-indigo);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+        }
+
+        .pipeline-step.complete {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pipeline-arrow {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .panels-grid { grid-template-columns: 1fr; }
+            .scenarios-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 12px 16px; }
+            .main { padding: 16px; }
+            .metrics-section { grid-template-columns: repeat(2, 1fr); }
+            .scenarios-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1><span>🎬</span> StudioPulse AI</h1>
-        <div id="pipeline-status" class="status-badge status-healthy">● Healthy</div>
-    </div>
-
-    <div class="dashboard">
-        <!-- Metrics -->
-        <div class="metrics-grid" id="metrics-grid"></div>
-
-        <!-- Controls -->
-        <div class="panel">
-            <h3>🎮 Demo Controls</h3>
-            <div class="controls">
-                <button class="btn btn-danger" onclick="triggerScenario('gpu_saturation')">🔥 GPU Saturation</button>
-                <button class="btn btn-danger" onclick="triggerScenario('memory_leak')">💾 Memory Leak</button>
-                <button class="btn btn-danger" onclick="triggerScenario('queue_backlog')">📋 Queue Backlog</button>
-                <button class="btn btn-danger" onclick="triggerScenario('disk_full')">💽 Disk Full</button>
-                <button class="btn btn-danger" onclick="triggerScenario('node_failure')">🖥️ Node Failure</button>
-                <button class="btn" onclick="triggerScenario(null)">🎲 Random Scenario</button>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🎬</div>
+            <div>
+                <h1>StudioPulse AI</h1>
+                <div class="subtitle">Autonomous Pipeline Intelligence</div>
             </div>
         </div>
+        <div class="header-right">
+            <span class="live-badge">● LIVE</span>
+            <div id="pipeline-status" class="status-pill status-healthy">
+                <span class="dot"></span>
+                <span class="text">Healthy</span>
+            </div>
+        </div>
+    </header>
 
-        <div class="panels">
-            <!-- Active Alerts -->
+    <!-- Main -->
+    <main class="main">
+        <!-- Pipeline Flow -->
+        <div class="pipeline-flow">
+            <div class="pipeline-step" id="step-monitor">👁️ Monitor</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" id="step-diagnose">🧠 Diagnose</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" id="step-remediate">⚡ Remediate</div>
+            <span class="pipeline-arrow">→</span>
+            <div class="pipeline-step" id="step-verify">✅ Verify</div>
+        </div>
+
+        <!-- Metrics -->
+        <section class="metrics-section" id="metrics-grid"></section>
+
+        <!-- Scenario Controls -->
+        <section class="panel scenarios-panel">
+            <div class="panel-header">
+                <div class="panel-title"><span class="icon">🎮</span> Trigger Incident Scenario</div>
+                <div class="panel-badge">DEMO MODE</div>
+            </div>
+            <div class="scenarios-grid">
+                <button class="scenario-btn" onclick="triggerScenario('gpu_saturation')">
+                    <span class="emoji">🔥</span>
+                    <span class="text">
+                        <div class="name">GPU Saturation</div>
+                        <div class="desc">8K renders overwhelm pool</div>
+                    </span>
+                </button>
+                <button class="scenario-btn" onclick="triggerScenario('memory_leak')">
+                    <span class="emoji">💾</span>
+                    <span class="text">
+                        <div class="name">Memory Leak</div>
+                        <div class="desc">Worker pods leaking RAM</div>
+                    </span>
+                </button>
+                <button class="scenario-btn" onclick="triggerScenario('queue_backlog')">
+                    <span class="emoji">📋</span>
+                    <span class="text">
+                        <div class="name">Queue Backlog</div>
+                        <div class="desc">200+ jobs pending</div>
+                    </span>
+                </button>
+                <button class="scenario-btn" onclick="triggerScenario('disk_full')">
+                    <span class="emoji">💽</span>
+                    <span class="text">
+                        <div class="name">Disk Full</div>
+                        <div class="desc">Output volume at 95%</div>
+                    </span>
+                </button>
+                <button class="scenario-btn" onclick="triggerScenario('node_failure')">
+                    <span class="emoji">🖥️</span>
+                    <span class="text">
+                        <div class="name">Node Failure</div>
+                        <div class="desc">GPU node unresponsive</div>
+                    </span>
+                </button>
+                <button class="scenario-btn scenario-random" onclick="triggerScenario(null)">
+                    <span class="emoji">🎲</span>
+                    <span class="text">
+                        <div class="name">Random</div>
+                        <div class="desc">Surprise incident</div>
+                    </span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Panels -->
+        <div class="panels-grid">
+            <!-- Alerts -->
             <div class="panel">
-                <h3>🚨 Active Alerts</h3>
+                <div class="panel-header">
+                    <div class="panel-title"><span class="icon">🚨</span> Active Alerts</div>
+                    <div class="panel-badge" id="alert-count">0</div>
+                </div>
                 <div id="alerts-container">
-                    <div class="no-alerts">✅ No active alerts</div>
+                    <div class="empty-state">
+                        <div class="icon">✅</div>
+                        <div>No active alerts — pipeline is healthy</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Render Jobs -->
             <div class="panel">
-                <h3>🎞️ Render Jobs</h3>
+                <div class="panel-header">
+                    <div class="panel-title"><span class="icon">🎞️</span> Render Jobs</div>
+                    <div class="panel-badge" id="job-count">0</div>
+                </div>
                 <div id="jobs-container"></div>
             </div>
 
             <!-- Incidents -->
             <div class="panel">
-                <h3>📋 Incident History</h3>
+                <div class="panel-header">
+                    <div class="panel-title"><span class="icon">📋</span> Incident History</div>
+                    <div class="panel-badge" id="incident-count">0</div>
+                </div>
                 <div id="incidents-container">
-                    <div class="no-alerts">No incidents yet</div>
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <div>No incidents recorded yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Status -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><span class="icon">🤖</span> Agent Status</div>
+                    <div class="panel-badge">3 AGENTS</div>
+                </div>
+                <div id="agent-status">
+                    <div class="job-item">
+                        <div class="job-icon">👁️</div>
+                        <div class="job-info">
+                            <div class="job-name">Monitor Agent</div>
+                            <div class="job-resolution">Watching Grafana alerts every 10s</div>
+                        </div>
+                        <div style="color: var(--accent-green); font-size: 12px; font-weight: 600;">ACTIVE</div>
+                    </div>
+                    <div class="job-item">
+                        <div class="job-icon">🧠</div>
+                        <div class="job-info">
+                            <div class="job-name">Diagnose Agent</div>
+                            <div class="job-resolution">Gemini AI root cause analysis</div>
+                        </div>
+                        <div style="color: var(--accent-green); font-size: 12px; font-weight: 600;">READY</div>
+                    </div>
+                    <div class="job-item">
+                        <div class="job-icon">⚡</div>
+                        <div class="job-info">
+                            <div class="job-name">Remediate Agent</div>
+                            <div class="job-resolution">Auto-fix via GKE operations</div>
+                        </div>
+                        <div style="color: var(--accent-green); font-size: 12px; font-weight: 600;">READY</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Agent Log -->
             <div class="panel log-panel">
-                <h3>🤖 Agent Activity Log</h3>
-                <div id="log-container"></div>
+                <div class="panel-header">
+                    <div class="panel-title"><span class="icon">📡</span> Agent Activity Log</div>
+                    <div class="panel-badge" id="log-count">0</div>
+                </div>
+                <div class="log-container" id="log-container"></div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         const REFRESH_INTERVAL = 2000;
         let logEntries = [];
+        let pipelineActive = false;
+
+        // Metrics configuration
+        const METRIC_CONFIG = {
+            gpu_utilization: { icon: '🔥', label: 'GPU Usage', unit: '%', thresholds: [75, 90] },
+            memory_utilization: { icon: '💾', label: 'Memory', unit: '%', thresholds: [75, 90] },
+            cpu_utilization: { icon: '⚙️', label: 'CPU', unit: '%', thresholds: [75, 90] },
+            render_queue_depth: { icon: '📋', label: 'Queue Depth', unit: 'jobs', thresholds: [20, 50] },
+            active_render_jobs: { icon: '🎬', label: 'Active Jobs', unit: '', thresholds: [999, 999] },
+            failed_renders_per_min: { icon: '❌', label: 'Failures/min', unit: '', thresholds: [1, 3] },
+            node_count: { icon: '🖥️', label: 'Nodes', unit: '', thresholds: [999, 999] },
+            healthy_nodes: { icon: '💚', label: 'Healthy Nodes', unit: '', thresholds: [999, 999] },
+            disk_usage_percent: { icon: '💽', label: 'Disk Usage', unit: '%', thresholds: [75, 90] },
+        };
 
         function addLog(level, message) {
-            const time = new Date().toLocaleTimeString();
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
             logEntries.unshift({ time, level, message });
             if (logEntries.length > 50) logEntries.pop();
             renderLog();
@@ -336,43 +839,38 @@
 
         function renderLog() {
             const container = document.getElementById('log-container');
+            document.getElementById('log-count').textContent = logEntries.length;
             container.innerHTML = logEntries.map(entry => `
                 <div class="log-entry">
-                    <span class="timestamp">[${entry.time}]</span>
-                    <span class="level-${entry.level}">[${entry.level.toUpperCase()}]</span>
-                    ${entry.message}
+                    <span class="log-time">${entry.time}</span>
+                    <span class="log-level log-level-${entry.level}">${entry.level}</span>
+                    <span class="log-message">${entry.message}</span>
                 </div>
             `).join('');
         }
 
-        function getMetricColor(name, value) {
-            if (name.includes('utilization') || name.includes('memory') || name.includes('disk')) {
-                if (value > 90) return 'danger';
-                if (value > 75) return 'warning';
-                return 'good';
-            }
-            if (name === 'render_queue_depth') {
-                if (value > 50) return 'danger';
-                if (value > 20) return 'warning';
-                return 'good';
-            }
-            if (name === 'failed_renders_per_min') {
-                if (value > 2) return 'danger';
-                if (value > 0) return 'warning';
-                return 'good';
-            }
-            return '';
+        function getValueClass(name, value) {
+            const config = METRIC_CONFIG[name];
+            if (!config) return 'value-neutral';
+            if (name === 'active_render_jobs' || name === 'node_count' || name === 'healthy_nodes') return 'value-neutral';
+            if (value >= config.thresholds[1]) return 'value-danger';
+            if (value >= config.thresholds[0]) return 'value-warning';
+            return 'value-good';
         }
 
-        function getMetricUnit(name) {
-            if (name.includes('percent') || name.includes('utilization')) return '%';
-            if (name.includes('mbps')) return 'Mbps';
-            if (name.includes('seconds')) return 's';
-            return '';
-        }
-
-        function formatMetricName(name) {
-            return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        function setPipelineStep(step) {
+            ['monitor', 'diagnose', 'remediate', 'verify'].forEach(s => {
+                const el = document.getElementById(`step-${s}`);
+                el.classList.remove('active', 'complete');
+            });
+            if (step) {
+                const steps = ['monitor', 'diagnose', 'remediate', 'verify'];
+                const idx = steps.indexOf(step);
+                for (let i = 0; i < idx; i++) {
+                    document.getElementById(`step-${steps[i]}`).classList.add('complete');
+                }
+                document.getElementById(`step-${step}`).classList.add('active');
+            }
         }
 
         async function fetchMetrics() {
@@ -381,45 +879,46 @@
                 const metrics = await res.json();
                 renderMetrics(metrics);
                 updateStatus(metrics.pipeline_state);
-            } catch (e) {
-                console.error('Failed to fetch metrics:', e);
-            }
+            } catch (e) {}
         }
 
         function renderMetrics(metrics) {
             const grid = document.getElementById('metrics-grid');
-            const displayMetrics = [
+            const displayOrder = [
                 'gpu_utilization', 'memory_utilization', 'cpu_utilization',
                 'render_queue_depth', 'active_render_jobs', 'failed_renders_per_min',
                 'node_count', 'healthy_nodes', 'disk_usage_percent'
             ];
 
-            grid.innerHTML = displayMetrics.map(name => {
+            grid.innerHTML = displayOrder.map(name => {
                 const value = metrics[name];
-                const color = getMetricColor(name, value);
-                const unit = getMetricUnit(name);
+                const config = METRIC_CONFIG[name] || { icon: '📊', label: name, unit: '' };
+                const colorClass = getValueClass(name, value);
+                const displayValue = typeof value === 'number' ? (Number.isInteger(value) ? value : value.toFixed(1)) : value;
+
                 return `
                     <div class="metric-card">
-                        <div class="label">${formatMetricName(name)}</div>
-                        <div class="value ${color}">${typeof value === 'number' ? value.toFixed(1) : value}</div>
-                        <div class="unit">${unit}</div>
+                        <div class="icon">${config.icon}</div>
+                        <div class="label">${config.label}</div>
+                        <div class="value ${colorClass}">${displayValue}</div>
+                        <div class="unit">${config.unit}</div>
                     </div>
                 `;
             }).join('');
         }
 
         function updateStatus(state) {
-            const badge = document.getElementById('pipeline-status');
-            badge.className = 'status-badge';
+            const pill = document.getElementById('pipeline-status');
+            pill.className = 'status-pill';
             if (state === 'healthy') {
-                badge.classList.add('status-healthy');
-                badge.textContent = '● Healthy';
+                pill.classList.add('status-healthy');
+                pill.innerHTML = '<span class="dot"></span><span class="text">Healthy</span>';
             } else if (state === 'critical' || state === 'degraded') {
-                badge.classList.add('status-critical');
-                badge.textContent = '● Critical';
+                pill.classList.add('status-critical');
+                pill.innerHTML = '<span class="dot"></span><span class="text">Critical</span>';
             } else {
-                badge.classList.add('status-recovering');
-                badge.textContent = '● Recovering';
+                pill.classList.add('status-recovering');
+                pill.innerHTML = '<span class="dot"></span><span class="text">Recovering</span>';
             }
         }
 
@@ -427,6 +926,7 @@
             try {
                 const res = await fetch('/api/alerts');
                 const data = await res.json();
+                document.getElementById('alert-count').textContent = data.count;
                 renderAlerts(data.alerts);
             } catch (e) {}
         }
@@ -434,13 +934,20 @@
         function renderAlerts(alerts) {
             const container = document.getElementById('alerts-container');
             if (!alerts || alerts.length === 0) {
-                container.innerHTML = '<div class="no-alerts">✅ No active alerts</div>';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">✅</div>
+                        <div>No active alerts — pipeline is healthy</div>
+                    </div>`;
                 return;
             }
             container.innerHTML = alerts.map(alert => `
                 <div class="alert-item">
-                    <div class="title">${alert.title}</div>
-                    <div class="meta">Severity: ${alert.labels?.severity || 'unknown'} | ${alert.labels?.alertname || ''}</div>
+                    <div class="alert-title">${alert.title}</div>
+                    <div class="alert-meta">
+                        <span>🏷️ ${alert.labels?.alertname || 'unknown'}</span>
+                        <span>⚠️ ${alert.labels?.severity || 'critical'}</span>
+                    </div>
                 </div>
             `).join('');
         }
@@ -449,19 +956,25 @@
             try {
                 const res = await fetch('/api/jobs');
                 const data = await res.json();
+                document.getElementById('job-count').textContent = data.jobs.length;
                 renderJobs(data.jobs);
             } catch (e) {}
         }
 
         function renderJobs(jobs) {
             const container = document.getElementById('jobs-container');
+            const statusIcons = { rendering: '🔄', completed: '✅', queued: '⏳', failed: '❌' };
             container.innerHTML = jobs.map(job => `
                 <div class="job-item">
-                    <div class="name">${job.name}</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${job.percent}%"></div>
+                    <div class="job-icon">${statusIcons[job.status] || '🎬'}</div>
+                    <div class="job-info">
+                        <div class="job-name">${job.name}</div>
+                        <div class="job-resolution">${job.resolution} • ${job.status}</div>
                     </div>
-                    <div class="percent">${job.percent}%</div>
+                    <div class="job-progress">
+                        <div class="job-progress-fill" style="width: ${job.percent}%"></div>
+                    </div>
+                    <div class="job-percent">${job.percent}%</div>
                 </div>
             `).join('');
         }
@@ -470,6 +983,7 @@
             try {
                 const res = await fetch('/api/incidents');
                 const data = await res.json();
+                document.getElementById('incident-count').textContent = data.incidents.length;
                 renderIncidents(data.incidents);
             } catch (e) {}
         }
@@ -477,17 +991,27 @@
         function renderIncidents(incidents) {
             const container = document.getElementById('incidents-container');
             if (!incidents || incidents.length === 0) {
-                container.innerHTML = '<div class="no-alerts">No incidents yet</div>';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <div>No incidents recorded yet</div>
+                    </div>`;
                 return;
             }
-            container.innerHTML = incidents.slice(-10).reverse().map(inc => `
-                <div class="incident-item">
-                    <div class="title">${inc.title}</div>
-                    <div class="status ${inc.status === 'resolved' ? 'incident-resolved' : 'incident-active'}">
-                        ${inc.status === 'resolved' ? '✅ Resolved' : '⚡ ' + inc.status}
+            container.innerHTML = incidents.slice(-8).reverse().map(inc => {
+                const statusClass = inc.status === 'resolved' ? 'incident-resolved' :
+                                   inc.status === 'triggered' ? 'incident-triggered' : 'incident-active';
+                const statusIcon = inc.status === 'resolved' ? '✅' :
+                                  inc.status === 'triggered' ? '🚨' : '⚡';
+                return `
+                    <div class="incident-item">
+                        <div class="incident-title">${inc.title}</div>
+                        <div class="incident-status ${statusClass}">
+                            ${statusIcon} ${inc.status.charAt(0).toUpperCase() + inc.status.slice(1)}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function triggerScenario(scenario) {
@@ -499,24 +1023,47 @@
                     body: JSON.stringify(body),
                 });
                 const data = await res.json();
-                addLog('error', `🚨 ALERT FIRED: ${data.alert.title}`);
-                addLog('info', '🤖 Monitor Agent: Alert detected, starting diagnosis...');
+
+                // Animate pipeline
+                addLog('error', `🚨 ALERT: ${data.alert.title}`);
+                setPipelineStep('monitor');
 
                 setTimeout(() => {
-                    addLog('info', '📊 Diagnose Agent: Correlating metrics from Grafana...');
-                }, 2000);
+                    addLog('info', '👁️ Monitor Agent detected firing alert');
+                    setPipelineStep('diagnose');
+                }, 1000);
+
                 setTimeout(() => {
-                    addLog('info', '🧠 Diagnose Agent: Analyzing with Gemini...');
+                    addLog('info', '📊 Diagnose Agent correlating metrics from Grafana...');
+                }, 2500);
+
+                setTimeout(() => {
+                    addLog('info', '🧠 Sending context to Gemini AI for analysis...');
                 }, 4000);
+
                 setTimeout(() => {
-                    addLog('warn', '🔧 Remediate Agent: Planning remediation steps...');
+                    addLog('warn', '🔍 Root cause identified with 92% confidence');
+                    setPipelineStep('remediate');
                 }, 6000);
+
                 setTimeout(() => {
-                    addLog('info', '⚡ Remediate Agent: Executing remediation...');
-                }, 8000);
+                    addLog('info', '⚡ Remediate Agent executing fix...');
+                }, 7500);
+
                 setTimeout(() => {
-                    addLog('success', '✅ Pipeline: Incident resolved autonomously');
-                }, 12000);
+                    addLog('info', '🔧 Action: Scaling GPU node pool 3 → 5 nodes');
+                }, 9000);
+
+                setTimeout(() => {
+                    addLog('info', '⏳ Waiting for stabilization...');
+                    setPipelineStep('verify');
+                }, 10500);
+
+                setTimeout(() => {
+                    addLog('success', '✅ Verified: All metrics returned to healthy range');
+                    addLog('success', '📝 Grafana annotation created for audit trail');
+                    setPipelineStep(null);
+                }, 13000);
 
             } catch (e) {
                 addLog('error', 'Failed to trigger scenario');
@@ -531,12 +1078,14 @@
             fetchIncidents();
         }, REFRESH_INTERVAL);
 
-        // Initial load
+        // Initial
         fetchMetrics();
         fetchAlerts();
         fetchJobs();
-        addLog('info', '🎬 StudioPulse AI Dashboard initialized');
-        addLog('info', '🤖 All agents ready: Monitor | Diagnose | Remediate');
+        addLog('info', '🎬 StudioPulse AI initialized');
+        addLog('info', '🤖 Agents online: Monitor • Diagnose • Remediate');
+        addLog('info', '📡 Connected to Grafana observability layer');
+        addLog('info', '🧠 Gemini AI reasoning engine ready');
     </script>
 </body>
 </html>
